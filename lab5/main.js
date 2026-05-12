@@ -29,3 +29,35 @@ let baseLayers = {
   "Topographical map": basemap_pdok
 };
 let toc = L.control.layers(baseLayers).addTo(map);
+
+// Register a geocoder to the map app                   // JUST THE FUNCTION TO CALL 
+register_geocoder = function (mapInstance) {            // register_geocoder = function that sets up the geocoder
+  let polygon = null;                                   // polygon = null = variable to store the search result bounding box
+
+  function clear() {                                    // function clear() = removes the polygon from the map after 2.5 seconds
+    if (polygon !== null) {
+      mapInstance.removeLayer(polygon);
+    }
+  }
+
+  var geocoder = L.Control.geocoder({                   // L.Control.geocoder() = creates the search box widget
+    defaultMarkGeocode: false
+  })
+    .on('markgeocode', function (e) {                   // .on('markgeocode', ...) = when user selects a result, draw a polygon around it
+      clear()
+      var bbox = e.geocode.bbox;
+      polygon = L.polygon([
+        bbox.getSouthEast(),
+        bbox.getNorthEast(),
+        bbox.getNorthWest(),
+        bbox.getSouthWest()
+      ]);
+      mapInstance.addLayer(polygon);                    
+      mapInstance.fitBounds(polygon.getBounds());       // mapInstance.fitBounds() = zoom the map to fit the polygon
+      setTimeout(clear, 2500);                          // setTimeout(clear, 2500) = automatically remove the polygon after 2500ms (2.5 seconds)
+    })
+    .addTo(mapInstance);
+  return geocoder;
+}
+                                                        // CALL GEOCODE FUNCTION:
+register_geocoder(map)                                  // register_geocoder(map) = initialize it on your map
